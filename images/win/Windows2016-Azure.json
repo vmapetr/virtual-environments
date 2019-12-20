@@ -24,7 +24,8 @@
         "install_user": "installer",
         "install_password": null,
         "capture_name_prefix": "packer",
-        "image_version": "dev"
+        "image_version": "dev",
+        "toolcache_registry": "https://buildcanary.pkgs.visualstudio.com/PipelineCanary/_packaging/hostedtoolcache/npm/registry/"
     },
     "builders": [
         {
@@ -268,6 +269,10 @@
         },
         {
             "type": "powershell",
+            "environment_vars":[
+                "TOOLCACHE_REGISTRY={{ user `toolcache_registry` }}",
+                "ROOT_FOLDER={{user `root_folder`}}"
+            ],
             "scripts":[
                 "{{ template_dir }}/scripts/Installers/Download-ToolCache.ps1"
             ]
@@ -448,6 +453,16 @@
             "type": "powershell",
             "scripts":[
                 "{{ template_dir }}/scripts/Installers/Install-AzureCosmosDbEmulator.ps1"
+            ]
+        },
+        {
+            "type": "powershell",
+            "environment_vars": [
+                "BOOST_VERSIONS=1.69.0",
+                "BOOST_DEFAULT=1.69.0"
+            ],
+            "scripts":[
+                "{{ template_dir }}/scripts/Installers/Set-BoostRoot.ps1"
             ]
         },
         {
