@@ -269,6 +269,23 @@
         },
         {
             "type": "powershell",
+            "scripts":[
+                "{{ template_dir }}/scripts/Installers/Install-NodeLts.ps1"
+            ]
+        },
+        {
+            "type": "powershell",
+            "scripts":[
+                "{{ template_dir }}/scripts/Installers/Install-7zip.ps1"
+            ]
+        },
+        {
+            "type": "file",
+            "source": "{{template_dir}}/toolcache.json",
+            "destination": "{{user `root_folder`}}/toolcache.json"
+        },
+        {
+            "type": "powershell",
             "environment_vars":[
                 "TOOLCACHE_REGISTRY={{ user `toolcache_registry` }}",
                 "ROOT_FOLDER={{user `root_folder`}}"
@@ -370,12 +387,6 @@
         {
             "type": "powershell",
             "scripts":[
-                "{{ template_dir }}/scripts/Installers/Install-NodeLts.ps1"
-            ]
-        },
-        {
-            "type": "powershell",
-            "scripts":[
                 "{{ template_dir }}/scripts/Installers/Install-JavaTools.ps1"
             ]
         },
@@ -463,12 +474,6 @@
             ],
             "scripts":[
                 "{{ template_dir }}/scripts/Installers/Set-BoostRoot.ps1"
-            ]
-        },
-        {
-            "type": "powershell",
-            "scripts":[
-                "{{ template_dir }}/scripts/Installers/Install-7zip.ps1"
             ]
         },
         {
