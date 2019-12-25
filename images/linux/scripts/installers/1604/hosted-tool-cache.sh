@@ -11,6 +11,9 @@ source $HELPER_SCRIPTS/document.sh
 set -e
 
 AGENT_TOOLSDIRECTORY=/opt/hostedtoolcache
+mkdir $AGENT_TOOLSDIRECTORY
+echo "AGENT_TOOLSDIRECTORY=$AGENT_TOOLSDIRECTORY" | tee -a /etc/environment
+
 chmod -R 777 $AGENT_TOOLSDIRECTORY
 
 echo "Installing npm-toolcache..."
