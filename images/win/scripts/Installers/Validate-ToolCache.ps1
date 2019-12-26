@@ -12,6 +12,28 @@ function GetChildFolders {
     return Get-ChildItem -Path $Path -Directory -Name
 }
 
+function Get-ToolcachePackages {
+    $toolcachePath = Join-Path $env:HOME "images" "win" "toolcache.json"
+    return Get-Content -Raw $toolcachePath | ConvertFrom-Json
+}
+
+$SoftwareArch = [pscustomobject]@{
+python = @()
+pypy = @()
+ruby = @()
+boost = @()
+}
+
+$packages = (Get-ToolcachePackages).PSObject.Properties | ForEach-Object {
+    $packageNameParts = $_.Name.Split("-")
+    $toolName = $packageNameParts[1]
+    $SoftwareArch.$toolName = $SoftwareArch.$toolName + $packageNameParts[3].Substring(1)
+    return [PSCustomObject] @{
+        ToolName = $packageNameParts[1]
+        Versions = $_.Value
+    }
+}
+
 function ToolcacheTest {
     param (
         [Parameter(Mandatory = $True)]
@@ -21,33 +43,42 @@ function ToolcacheTest {
     )
     if (Test-Path "$env:AGENT_TOOLSDIRECTORY\$SoftwareName")
     {
+        $softwarePackage = $packages | Where-Object { $_.ToolName -eq $SoftwareName } | Select-Object -First 1
         $description = ""
-        [array]$versions = GetChildFolders -Path "$env:AGENT_TOOLSDIRECTORY\$SoftwareName"
-        if ($versions.count -gt 0){
-            foreach ($version in $versions)
+        [array]$instaledVersions = GetChildFolders -Path "$env:AGENT_TOOLSDIRECTORY\$SoftwareName"
+        if (@(Compare-Object $softwarePackage.Versions $instaledVersions -SyncWindow 0).Length -eq 0){
+            foreach ($version in $instaledVersions)
             {
                 $architectures = GetChildFolders -Path "$env:AGENT_TOOLSDIRECTORY\$SoftwareName\$version"
 
                 Write-Host "$SoftwareName version - $version : $([system.String]::Join(",", $architectures))"
 
-                foreach ($arch in $architectures)
-                {
-                    $path = "$env:AGENT_TOOLSDIRECTORY\$SoftwareName\$version\$arch"
-                    foreach ($test in $ExecTests)
-                    {
-                        if (Test-Path "$path\$test")
-                        {
-                            Write-Host "$SoftwareName($test) $version($arch) is successfully installed:"
-                            Write-Host (& "$path\$test" --version)
-                        }
-                        else
-                        {
-                            Write-Host "$SoftwareName($test) $version ($arch) is not installed"
-                            exit 1
-                        }
-                    }
+                if (@(Compare-Object $SoftwareArch.$SoftwareName $architectures -SyncWindow 0).Length -eq 0) {
 
-                    $description += "_Version:_ $version ($arch)<br/>"
+                    foreach ($arch in $architectures)
+                    {
+                        $path = "$env:AGENT_TOOLSDIRECTORY\$SoftwareName\$version\$arch"
+                        foreach ($test in $ExecTests)
+                        {
+                            if (Test-Path "$path\$test")
+                            {
+                                Write-Host "$SoftwareName($test) $version($arch) is successfully installed:"
+                                Write-Host (& "$path\$test" --version)
+                            }
+                            else
+                            {
+                                Write-Host "$SoftwareName($test) $version ($arch) is not installed"
+                                exit 1
+                            }
+                        }
+
+                        $description += "_Version:_ $version ($arch)<br/>"
+                    }
+                }
+                else
+                {
+                    Write-Host "$env:AGENT_TOOLSDIRECTORY\$SoftwareName\$version does not include required architecture"
+                    exit 1
                 }
             }
 
