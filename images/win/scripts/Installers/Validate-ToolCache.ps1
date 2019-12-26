@@ -27,7 +27,7 @@ boost = @()
 $packages = (Get-ToolcachePackages).PSObject.Properties | ForEach-Object {
     $packageNameParts = $_.Name.Split("-")
     $toolName = $packageNameParts[1]
-    $SoftwareArch.$toolName = $SoftwareArch.$toolName + $packageNameParts[3].Substring(1)
+    $SoftwareArch.$toolName = $SoftwareArch.$toolName + $packageNameParts[3]
     return [PSCustomObject] @{
         ToolName = $packageNameParts[1]
         Versions = $_.Value
