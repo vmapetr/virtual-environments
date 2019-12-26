@@ -13,7 +13,7 @@ function GetChildFolders {
 }
 
 function Get-ToolcachePackages {
-    $toolcachePath = Join-Path $env:HOME "images" "win" "toolcache.json"
+    $toolcachePath = Join-Path $env:installer_script_folder "toolcache.json"
     return Get-Content -Raw $toolcachePath | ConvertFrom-Json
 }
 
