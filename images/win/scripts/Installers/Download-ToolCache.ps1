@@ -33,6 +33,11 @@ Function InstallTool {
     cmd.exe /c 'install_to_tools_cache.bat'
 }
 
+# HostedToolCache Path
+$Dest = "C:/"
+$Path = "hostedtoolcache/windows"
+$ToolsDirectory = $Dest + $Path
+
 # Define AGENT_TOOLSDIRECTORY environment variable
 $env:AGENT_TOOLSDIRECTORY = $ToolsDirectory
 setx AGENT_TOOLSDIRECTORY $ToolsDirectory /M
