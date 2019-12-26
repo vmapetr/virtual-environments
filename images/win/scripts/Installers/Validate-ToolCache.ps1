@@ -17,20 +17,13 @@ function Get-ToolcachePackages {
     return Get-Content -Raw $toolcachePath | ConvertFrom-Json
 }
 
-$SoftwareArch = [pscustomobject]@{
-python = @()
-pypy = @()
-ruby = @()
-boost = @()
-}
-
 $packages = (Get-ToolcachePackages).PSObject.Properties | ForEach-Object {
     $packageNameParts = $_.Name.Split("-")
     $toolName = $packageNameParts[1]
-    $SoftwareArch.$toolName = $SoftwareArch.$toolName + $packageNameParts[3]
     return [PSCustomObject] @{
         ToolName = $packageNameParts[1]
         Versions = $_.Value
+        Arch = $packageNameParts[3]
     }
 }
 
@@ -43,56 +36,56 @@ function ToolcacheTest {
     )
     if (Test-Path "$env:AGENT_TOOLSDIRECTORY\$SoftwareName")
     {
-        $softwarePackage = $packages | Where-Object { $_.ToolName -eq $SoftwareName } | Select-Object -First 1
         $description = ""
         [array]$instaledVersions = GetChildFolders -Path "$env:AGENT_TOOLSDIRECTORY\$SoftwareName"
         if ($instaledVersions.count -gt 0){
-            foreach ($version in $softwarePackage.Versions)
+            $softwarePackages = $packages | Where-Object { $_.ToolName -eq $SoftwareName }
+            foreach($softwarePackage in $softwarePackages)
             {
-                $foundVersion = $instaledVersions | where { $_.StartsWith($version) }
+                foreach ($version in $softwarePackage.Versions)
+                {
+                    $foundVersion = $instaledVersions | where { $_.StartsWith($version) }
 
-                if ($foundVersion -ne $null){
+                    if ($foundVersion -ne $null){
 
-                    $architectures = GetChildFolders -Path "$env:AGENT_TOOLSDIRECTORY\$SoftwareName\$foundVersion"
+                        $architectures = GetChildFolders -Path "$env:AGENT_TOOLSDIRECTORY\$SoftwareName\$foundVersion"
 
-                    Write-Host "$SoftwareName version - $foundVersion : $([system.String]::Join(",", $architectures))"
+                        Write-Host "$SoftwareName version - $foundVersion : $([system.String]::Join(",", $architectures))"
 
-                    if (@(Compare-Object $SoftwareArch.$SoftwareName $architectures -SyncWindow 0).Length -eq 0) {
+                        $softwareArch = $softwarePackage.Arch
 
-                        foreach ($arch in $architectures)
-                        {
-                            $path = "$env:AGENT_TOOLSDIRECTORY\$SoftwareName\$foundVersion\$arch"
+                        if ($architectures -Contains $softwareArch.Substring(1)) {
+                            $path = "$env:AGENT_TOOLSDIRECTORY\$SoftwareName\$foundVersion\$softwareArch"
                             foreach ($test in $ExecTests)
                             {
                                 if (Test-Path "$path\$test")
                                 {
-                                    Write-Host "$SoftwareName($test) $foundVersion($arch) is successfully installed:"
+                                    Write-Host "$SoftwareName($test) $foundVersion($softwareArch) is successfully installed:"
                                     Write-Host (& "$path\$test" --version)
                                 }
                                 else
                                 {
-                                    Write-Host "$SoftwareName($test) $foundVersion ($arch) is not installed"
+                                    Write-Host "$SoftwareName($test) $foundVersion ($softwareArch) is not installed"
                                     exit 1
                                 }
                             }
-
-                            $description += "_Version:_ $foundVersion ($arch)<br/>"
+                            $description += "_Version:_ $foundVersion ($softwareArch)<br/>"
+                        }
+                        else
+                        {
+                            Write-Host "$env:AGENT_TOOLSDIRECTORY\$SoftwareName\$foundVersion does not include required architecture"
+                            exit 1
                         }
                     }
                     else
                     {
-                        Write-Host "$env:AGENT_TOOLSDIRECTORY\$SoftwareName\$foundVersion does not include required architecture"
+                        Write-Host "$env:AGENT_TOOLSDIRECTORY\$SoftwareName\$version.* was not found"
                         exit 1
                     }
                 }
-                else
-                {
-                    Write-Host "$env:AGENT_TOOLSDIRECTORY\$SoftwareName\$version.* was not found"
-                    exit 1
-                }
-            }
 
-            Add-SoftwareDetailsToMarkdown -SoftwareName $SoftwareName -DescriptionMarkdown $description
+                Add-SoftwareDetailsToMarkdown -SoftwareName $SoftwareName -DescriptionMarkdown $description
+            }
         }
         else
         {
