@@ -57,5 +57,6 @@ $ToolVersions.PSObject.Properties | ForEach-Object {
 }
 
 #junction point from the previous Python2 directory to the toolcache Python2
+Write-Host "Create symlink to Python2"
 $python2Dir = (Get-Item -Path ($ToolsDirectory + '/Python/2.7*/x64')).FullName
 cmd.exe /c mklink /d "C:\Python27amd64" "$python2Dir"
