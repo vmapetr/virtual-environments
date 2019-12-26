@@ -46,38 +46,48 @@ function ToolcacheTest {
         $softwarePackage = $packages | Where-Object { $_.ToolName -eq $SoftwareName } | Select-Object -First 1
         $description = ""
         [array]$instaledVersions = GetChildFolders -Path "$env:AGENT_TOOLSDIRECTORY\$SoftwareName"
-        if (@(Compare-Object $softwarePackage.Versions $instaledVersions -SyncWindow 0).Length -eq 0){
-            foreach ($version in $instaledVersions)
+        if ($instaledVersions.count -gt 0){
+            foreach ($version in $softwarePackage.Versions)
             {
-                $architectures = GetChildFolders -Path "$env:AGENT_TOOLSDIRECTORY\$SoftwareName\$version"
+                $foundVersion = $instaledVersions | where { $_.StartsWith($version) }
 
-                Write-Host "$SoftwareName version - $version : $([system.String]::Join(",", $architectures))"
+                if ($foundVersion -ne $null){
 
-                if (@(Compare-Object $SoftwareArch.$SoftwareName $architectures -SyncWindow 0).Length -eq 0) {
+                    $architectures = GetChildFolders -Path "$env:AGENT_TOOLSDIRECTORY\$SoftwareName\$foundVersion"
 
-                    foreach ($arch in $architectures)
-                    {
-                        $path = "$env:AGENT_TOOLSDIRECTORY\$SoftwareName\$version\$arch"
-                        foreach ($test in $ExecTests)
+                    Write-Host "$SoftwareName version - $foundVersion : $([system.String]::Join(",", $architectures))"
+
+                    if (@(Compare-Object $SoftwareArch.$SoftwareName $architectures -SyncWindow 0).Length -eq 0) {
+
+                        foreach ($arch in $architectures)
                         {
-                            if (Test-Path "$path\$test")
+                            $path = "$env:AGENT_TOOLSDIRECTORY\$SoftwareName\$foundVersion\$arch"
+                            foreach ($test in $ExecTests)
                             {
-                                Write-Host "$SoftwareName($test) $version($arch) is successfully installed:"
-                                Write-Host (& "$path\$test" --version)
+                                if (Test-Path "$path\$test")
+                                {
+                                    Write-Host "$SoftwareName($test) $foundVersion($arch) is successfully installed:"
+                                    Write-Host (& "$path\$test" --version)
+                                }
+                                else
+                                {
+                                    Write-Host "$SoftwareName($test) $foundVersion ($arch) is not installed"
+                                    exit 1
+                                }
                             }
-                            else
-                            {
-                                Write-Host "$SoftwareName($test) $version ($arch) is not installed"
-                                exit 1
-                            }
-                        }
 
-                        $description += "_Version:_ $version ($arch)<br/>"
+                            $description += "_Version:_ $foundVersion ($arch)<br/>"
+                        }
+                    }
+                    else
+                    {
+                        Write-Host "$env:AGENT_TOOLSDIRECTORY\$SoftwareName\$foundVersion does not include required architecture"
+                        exit 1
                     }
                 }
                 else
                 {
-                    Write-Host "$env:AGENT_TOOLSDIRECTORY\$SoftwareName\$version does not include required architecture"
+                    Write-Host "$env:AGENT_TOOLSDIRECTORY\$SoftwareName\$version.* was not found"
                     exit 1
                 }
             }
