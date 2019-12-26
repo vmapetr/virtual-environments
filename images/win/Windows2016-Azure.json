@@ -16,6 +16,7 @@
         "private_virtual_network_with_public_ip": "{{env `PRIVATE_VIRTUAL_NETWORK_WITH_PUBLIC_IP`}}",
         "vm_size": "Standard_DS4_v2",
 
+        "root_folder": "C:",
         "image_folder": "C:\\image",
         "commit_file": "C:\\image\\commit.txt",
         "metadata_file": "C:\\image\\metadata.txt",
@@ -582,6 +583,9 @@
         },
         {
             "type": "powershell",
+            "environment_vars":[
+                "ROOT_FOLDER={{user `root_folder`}}"
+            ],
             "scripts":[
                 "{{ template_dir }}/scripts/Installers/Validate-ToolCache.ps1"
             ]
