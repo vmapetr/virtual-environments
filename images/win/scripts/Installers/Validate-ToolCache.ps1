@@ -54,7 +54,7 @@ function ToolcacheTest {
 
                         $softwareArch = $softwarePackage.Arch
 
-                        if ($architectures -Contains $softwareArch.Substring(1)) {
+                        if ($architectures -Contains $softwareArch) {
                             $path = "$env:AGENT_TOOLSDIRECTORY\$SoftwareName\$foundVersion\$softwareArch"
                             foreach ($test in $ExecTests)
                             {
