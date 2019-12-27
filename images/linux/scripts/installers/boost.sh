@@ -4,6 +4,9 @@
 ##  Desc:  Installs Boost C++ Libraries
 ################################################################################
 
+# Source the helpers for use with the script
+source $HELPER_SCRIPTS/document.sh
+
 BOOST_LIB=/usr/local/share/boost
 
 # Install Boost
