@@ -16,4 +16,6 @@ do
     if [[ $BOOST_VERSION == $BOOST_DEFAULT ]]; then
         echo "BOOST_ROOT=$BOOST_LIB/$BOOST_VERSION" | tee -a /etc/environment
     fi
+
+    DocumentInstalledItem "Boost C++ Libraries $BOOST_VERSION"
 done

@@ -51,9 +51,3 @@ pypys=$(ls $AGENT_TOOLSDIRECTORY/PyPy)
 for pypy in $pypys; do
 	DocumentInstalledItemIndent "PyPy $pypy"
 done;
-
-DocumentInstalledItem "Boost C++ Libraries:"
-boosts=$(ls $AGENT_TOOLSDIRECTORY/Boost)
-for boost in $boosts; do
-    DocumentInstalledItemIndent "Boost $boost"
-done;
