@@ -58,7 +58,8 @@ function ToolcacheTest {
                             {
                                 if (Test-Path "$path\$test")
                                 {
-                                    Write-Host "$SoftwareName($test) $foundVersion($softwareArch) is successfully installed: " + ("$path\$test" --version)
+                                    Write-Host "$SoftwareName($test) $foundVersion($softwareArch) is successfully installed:"
+                                    Write-Host (& "$path\$test" --version)
                                 }
                                 else
                                 {
