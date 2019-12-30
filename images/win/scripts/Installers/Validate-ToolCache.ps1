@@ -50,8 +50,6 @@ function ToolcacheTest {
 
                         $architectures = GetChildFolders -Path "$env:AGENT_TOOLSDIRECTORY\$SoftwareName\$foundVersion"
 
-                        Write-Host "$SoftwareName version - $foundVersion : $([system.String]::Join(",", $architectures))"
-
                         $softwareArch = $softwarePackage.Arch
 
                         if ($architectures -Contains $softwareArch) {
@@ -60,8 +58,8 @@ function ToolcacheTest {
                             {
                                 if (Test-Path "$path\$test")
                                 {
-                                    Write-Host "$SoftwareName($test) $foundVersion($softwareArch) is successfully installed:"
-                                    Write-Host (& "$path\$test" --version)
+                                    $softwareVersion = "$path\$test" --version
+                                    Write-Host "$SoftwareName($test) $foundVersion($softwareArch) is successfully installed: $softwareVersion"
                                 }
                                 else
                                 {
