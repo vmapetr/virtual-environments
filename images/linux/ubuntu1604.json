@@ -170,7 +170,7 @@
         },
         {
             "type": "file",
-            "source": "{{template_dir}}/toolcache.json",
+            "source": "{{template_dir}}/toolcache-1604.json",
             "destination": "{{user `installer_script_folder`}}/toolcache.json"
         },
         {
@@ -179,7 +179,7 @@
                 "{{template_dir}}/scripts/installers/1604/android.sh",
                 "{{template_dir}}/scripts/installers/1604/azpowershell.sh",
                 "{{template_dir}}/scripts/helpers/containercache.sh",
-                "{{template_dir}}/scripts/installers/1604/hosted-tool-cache.sh",
+                "{{template_dir}}/scripts/installers/hosted-tool-cache.sh",
                 "{{template_dir}}/scripts/installers/python.sh",
                 "{{template_dir}}/scripts/installers/test-toolcache.sh"
             ],

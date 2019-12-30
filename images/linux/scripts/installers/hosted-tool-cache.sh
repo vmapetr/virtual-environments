@@ -17,20 +17,15 @@ echo "AGENT_TOOLSDIRECTORY=$AGENT_TOOLSDIRECTORY" | tee -a /etc/environment
 chmod -R 777 $AGENT_TOOLSDIRECTORY
 
 echo "Installing npm-toolcache..."
+TOOLSET_PATH="$INSTALLER_SCRIPT_FOLDER/toolcache.json"
 
-toolVersionsFileContent=$(cat "$INSTALLER_SCRIPT_FOLDER/toolcache.json")
-tools=$(echo $toolVersionsFileContent | jq -r 'keys | .[]')
+PACKAGE_LIST=($(jq -r 'keys | .[]' $TOOLSET_PATH))
 
-for tool in ${tools[@]}; do
-    toolVersions=$(echo $toolVersionsFileContent | jq -r ".[\"$tool\"] | .[]")
-
-    for toolVersion in ${toolVersions[@]}; do
-        IFS='-' read -ra toolName <<< "$TOOL"
-
-        echo "Install ${toolName[1]} - v.$toolVersion"
-
-        toolVersionToInstall=$(printf "$tool" "1604" "$toolVersion")
-        npm install $toolVersionToInstall --registry=$TOOLCACHE_REGISTRY
+for PACKAGE_NAME in ${PACKAGE_LIST[@]}; do
+    PACKAGE_VERSIONS=($(jq -r ".[\"$PACKAGE_NAME\"] | .[]" $TOOLSET_PATH))
+    for PACKAGE_VERSION in ${PACKAGE_VERSIONS[@]}; do
+        echo "Install ${PACKAGE_NAME}@${PACKAGE_VERSION}"
+        npm install ${PACKAGE_NAME}@${PACKAGE_VERSION} --registry=${TOOLCACHE_REGISTRY}
     done;
 done;
 
