@@ -67,7 +67,6 @@ for package_name in ${package_list[@]}; do
 
    # set dictionary
    TOOLCACHE_KEY_VALUE+=(["$key_alias"]="$package_name")
-
 done;
 
 AGENT_TOOLSDIRECTORY=/opt/hostedtoolcache
