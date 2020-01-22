@@ -17,7 +17,7 @@ function Get-ToolcachePackages {
     return Get-Content -Raw $toolcachePath | ConvertFrom-Json
 }
 
-$packages = (Get-ToolcachePackages).PSObject.Properties | ForEach-Object {
+$toolcachePackages = (Get-ToolcachePackages).PSObject.Properties | ForEach-Object {
     $packageNameParts = $_.Name.Split("-")
     $toolName = $packageNameParts[1]
     return [PSCustomObject] @{
@@ -27,6 +27,54 @@ $packages = (Get-ToolcachePackages).PSObject.Properties | ForEach-Object {
     }
 }
 
+function GetSoftwarePagesByName {
+    param (
+        [Parameter(Mandatory = $True)]
+        [string]$SoftwareName
+    )
+    return $toolcachePackages | Where-Object { $_.ToolName -eq $SoftwareName }
+}
+
+function RunTestsByPath {
+    param (
+        [Parameter(Mandatory = $True)]
+        [string[]]$ExecTests,
+        [Parameter(Mandatory = $True)]
+        [string]$Path,
+        [Parameter(Mandatory = $True)]
+        [string]$SoftwareName,
+        [Parameter(Mandatory = $True)]
+        [string]$SoftwareVer,
+        [Parameter(Mandatory = $True)]
+        [string]$SoftwareArch
+    )
+
+    foreach ($test in $ExecTests)
+    {
+        if (Test-Path "$Path\$test")
+        {
+            Write-Host "$SoftwareName($test) $SoftwareVer($SoftwareArch) is successfully installed:"
+            Write-Host (& "$Path\$test" --version)
+        }
+        else
+        {
+            Write-Host "$SoftwareName($test) $SoftwareVer($SoftwareArch) is not installed"
+            exit 1
+        }
+    }
+}
+
+function UpdateMarkdownDescription {
+    param (
+        [string]$Description,
+        [Parameter(Mandatory = $True)]
+        [string]$SoftwareVer,
+        [Parameter(Mandatory = $True)]
+        [string]$SoftwareArch
+    )
+    return $Description += "_Version:_ $SoftwareVer ($SoftwareArch)<br/>"
+}
+
 function ToolcacheTest {
     param (
         [Parameter(Mandatory = $True)]
@@ -34,67 +82,49 @@ function ToolcacheTest {
         [Parameter(Mandatory = $True)]
         [string[]]$ExecTests
     )
-    if (Test-Path "$env:AGENT_TOOLSDIRECTORY\$SoftwareName")
+
+    $markdownDescription = ""
+    $softwarePath = "$env:AGENT_TOOLSDIRECTORY\$SoftwareName"
+
+    if (-Not (Test-Path $softwarePath))
     {
-        $description = ""
-        [array]$installedVersions = GetChildFolders -Path "$env:AGENT_TOOLSDIRECTORY\$SoftwareName"
-        if ($installedVersions.count -gt 0){
-            $softwarePackages = $packages | Where-Object { $_.ToolName -eq $SoftwareName }
-            foreach($softwarePackage in $softwarePackages)
-            {
-                foreach ($version in $softwarePackage.Versions)
-                {
-                    $foundVersion = $installedVersions | where { $_.StartsWith($version) }
-
-                    if ($foundVersion -ne $null){
-
-                        $architectures = GetChildFolders -Path "$env:AGENT_TOOLSDIRECTORY\$SoftwareName\$foundVersion"
-
-                        $softwareArch = $softwarePackage.Arch
-
-                        if ($architectures -Contains $softwareArch) {
-                            $path = "$env:AGENT_TOOLSDIRECTORY\$SoftwareName\$foundVersion\$softwareArch"
-                            foreach ($test in $ExecTests)
-                            {
-                                if (Test-Path "$path\$test")
-                                {
-                                    Write-Host "$SoftwareName($test) $foundVersion($softwareArch) is successfully installed:"
-                                    Write-Host (& "$path\$test" --version)
-                                }
-                                else
-                                {
-                                    Write-Host "$SoftwareName($test) $foundVersion ($softwareArch) is not installed"
-                                    exit 1
-                                }
-                            }
-                            $description += "_Version:_ $foundVersion ($softwareArch)<br/>"
-                        }
-                        else
-                        {
-                            Write-Host "$env:AGENT_TOOLSDIRECTORY\$SoftwareName\$foundVersion does not include required architecture"
-                            exit 1
-                        }
-                    }
-                    else
-                    {
-                        Write-Host "$env:AGENT_TOOLSDIRECTORY\$SoftwareName\$version.* was not found"
-                        exit 1
-                    }
-                }
-
-                Add-SoftwareDetailsToMarkdown -SoftwareName $SoftwareName -DescriptionMarkdown $description
-            }
-        }
-        else
-        {
-            Write-Host "$env:AGENT_TOOLSDIRECTORY\$SoftwareName does not include any folders"
-            exit 1
-        }
-    }
-    else
-    {
-        Write-Host "$env:AGENT_TOOLSDIRECTORY\$SoftwareName does not exist"
+        Write-Host "$softwarePath does not exist"
         exit 1
+    }
+
+    [array]$installedVersions = GetChildFolders -Path $softwarePath
+    if ($installedVersions.count -eq 0)
+    {
+        Write-Host "$softwarePath does not include any folders"
+        exit 1
+    }
+
+    $softwarePackages = GetSoftwarePagesByName -SoftwareName $SoftwareName
+    foreach($softwarePackage in $softwarePackages)
+    {
+        foreach ($version in $softwarePackage.Versions)
+        {
+            $foundVersion = $installedVersions | where { $_.StartsWith($version) }
+            if ($foundVersion -eq $null)
+            {
+                Write-Host "$softwarePath\$version.* was not found"
+                exit 1
+            }
+
+            $installedArch = GetChildFolders -Path "$softwarePath\$foundVersion"
+            $requiredArch = $softwarePackage.Arch
+            if (-Not ($installedArch -Contains $requiredArch))
+            {
+                Write-Host "$softwarePath\$foundVersion does not include required architecture"
+                exit 1
+            }
+
+            $path = "$softwarePath\$foundVersion\$requiredArch"
+            RunTestsByPath -ExecTests $ExecTests -Path $path -SoftwareName $SoftwareName -SoftwareVer $foundVersion -SoftwareArch $requiredArch
+
+            $markdownDescription = UpdateMarkdownDescription -Description $markdownDescription -SoftwareVer $foundVersion -SoftwareArch $requiredArch
+        }
+        Add-SoftwareDetailsToMarkdown -SoftwareName $SoftwareName -DescriptionMarkdown $markdownDescription
     }
 }
 
