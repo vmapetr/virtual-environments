@@ -54,6 +54,7 @@
         {
             "type": "shell",
             "inline": [
+                "echo the length of github access token is ${#GITHUB_FEED_TOKEN}",
                 "mkdir {{user `image_folder`}}",
                 "chmod 777 {{user `image_folder`}}",
                 "echo {{user `commit_url`}} > {{user `commit_file`}}",
