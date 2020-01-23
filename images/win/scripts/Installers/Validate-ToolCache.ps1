@@ -19,15 +19,14 @@ function Get-ToolcachePackages {
 
 $toolcachePackages = (Get-ToolcachePackages).PSObject.Properties | ForEach-Object {
     $packageNameParts = $_.Name.Split("-")
-    $toolName = $packageNameParts[1]
     return [PSCustomObject] @{
         ToolName = $packageNameParts[1]
         Versions = $_.Value
-        Arch = $packageNameParts[3]
+        Architecture = $packageNameParts[3]
     }
 }
 
-function GetSoftwarePagesByName {
+function GetToolsByName {
     param (
         [Parameter(Mandatory = $True)]
         [string]$SoftwareName
@@ -44,21 +43,21 @@ function RunTestsByPath {
         [Parameter(Mandatory = $True)]
         [string]$SoftwareName,
         [Parameter(Mandatory = $True)]
-        [string]$SoftwareVer,
+        [string]$SoftwareVersion,
         [Parameter(Mandatory = $True)]
-        [string]$SoftwareArch
+        [string]$SoftwareArchitecture
     )
 
     foreach ($test in $ExecTests)
     {
         if (Test-Path "$Path\$test")
         {
-            Write-Host "$SoftwareName($test) $SoftwareVer($SoftwareArch) is successfully installed:"
+            Write-Host "$SoftwareName($test) $SoftwareVersion($SoftwareArchitecture) is successfully installed:"
             Write-Host (& "$Path\$test" --version)
         }
         else
         {
-            Write-Host "$SoftwareName($test) $SoftwareVer($SoftwareArch) is not installed"
+            Write-Host "$SoftwareName($test) $SoftwareVersion($SoftwareArchitecture) is not installed"
             exit 1
         }
     }
@@ -68,11 +67,11 @@ function UpdateMarkdownDescription {
     param (
         [string]$Description,
         [Parameter(Mandatory = $True)]
-        [string]$SoftwareVer,
+        [string]$SoftwareVersion,
         [Parameter(Mandatory = $True)]
-        [string]$SoftwareArch
+        [string]$SoftwareArchitecture
     )
-    return $Description += "_Version:_ $SoftwareVer ($SoftwareArch)<br/>"
+    return $Description += "_Version:_ $SoftwareVersion ($SoftwareArchitecture)<br/>"
 }
 
 function ToolcacheTest {
@@ -99,10 +98,10 @@ function ToolcacheTest {
         exit 1
     }
 
-    $softwarePackages = GetSoftwarePagesByName -SoftwareName $SoftwareName
-    foreach($softwarePackage in $softwarePackages)
+    $tools = GetToolsByName -SoftwareName $SoftwareName
+    foreach($tool in $tools)
     {
-        foreach ($version in $softwarePackage.Versions)
+        foreach ($version in $tool.Versions)
         {
             $foundVersion = $installedVersions | where { $_.StartsWith($version) }
             if ($foundVersion -eq $null)
@@ -111,18 +110,18 @@ function ToolcacheTest {
                 exit 1
             }
 
-            $installedArch = GetChildFolders -Path "$softwarePath\$foundVersion"
-            $requiredArch = $softwarePackage.Arch
-            if (-Not ($installedArch -Contains $requiredArch))
+            $installedArchitecture = GetChildFolders -Path "$softwarePath\$foundVersion"
+            $requiredArchitecture = $tool.Architecture
+            if (-Not ($installedArchitecture -Contains $requiredArchitecture))
             {
                 Write-Host "$softwarePath\$foundVersion does not include required architecture"
                 exit 1
             }
 
-            $path = "$softwarePath\$foundVersion\$requiredArch"
-            RunTestsByPath -ExecTests $ExecTests -Path $path -SoftwareName $SoftwareName -SoftwareVer $foundVersion -SoftwareArch $requiredArch
+            $path = "$softwarePath\$foundVersion\$requiredArchitecture"
+            RunTestsByPath -ExecTests $ExecTests -Path $path -SoftwareName $SoftwareName -SoftwareVersion $foundVersion -SoftwareArchitecture $requiredArchitecture
 
-            $markdownDescription = UpdateMarkdownDescription -Description $markdownDescription -SoftwareVer $foundVersion -SoftwareArch $requiredArch
+            $markdownDescription = UpdateMarkdownDescription -Description $markdownDescription -SoftwareVersion $foundVersion -SoftwareArchitecture $requiredArchitecture
         }
         Add-SoftwareDetailsToMarkdown -SoftwareName $SoftwareName -DescriptionMarkdown $markdownDescription
     }
