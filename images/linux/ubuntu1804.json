@@ -21,7 +21,9 @@
         "vm_size": "Standard_DS2_v2",
         "capture_name_prefix": "packer",
         "image_version": "dev",
-        "toolcache_registry": "https://buildcanary.pkgs.visualstudio.com/PipelineCanary/_packaging/hostedtoolcache/npm/registry/"
+        "toolcache_registry": "https://buildcanary.pkgs.visualstudio.com/PipelineCanary/_packaging/hostedtoolcache/npm/registry/",
+        "github_feed_token": null
+
     },
     "sensitive-variables": ["client_secret"],
     "builders": [
@@ -54,12 +56,16 @@
         {
             "type": "shell",
             "inline": [
+                "echo the length of github access token is ${#GITHUB_FEED_TOKEN}",
                 "mkdir {{user `image_folder`}}",
                 "chmod 777 {{user `image_folder`}}",
                 "echo {{user `commit_url`}} > {{user `commit_file`}}",
                 "chmod +r {{user `commit_file`}}"
             ],
-            "execute_command": "sudo sh -c '{{ .Vars }} {{ .Path }}'"
+            "execute_command": "sudo sh -c '{{ .Vars }} {{ .Path }}'",
+            "environment_vars": [
+                "GITHUB_FEED_TOKEN={{user `github_feed_token`}}"
+            ]
         },
         {
             "type": "shell",
