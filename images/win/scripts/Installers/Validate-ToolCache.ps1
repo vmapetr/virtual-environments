@@ -63,6 +63,62 @@ function RunTestsByPath {
     }
 }
 
+function Get-SystemDefaultPython {
+    if (Get-Command -Name 'python')
+    {
+        Write-Host "Python $(& python -V 2>&1) on path"
+    }
+    else
+    {
+        Write-Host "Python is not on path"
+        exit 1
+    }
+
+    $pythonBinVersion = $(& python -V 2>&1)
+    if ($pythonBinVersion -notlike "Python 3.*")
+    {
+        Write-Error "Python 3 is not in the PATH"
+        exit 1
+    }
+
+    $pythonExeOnPath = (Get-Command -Name 'python').Path
+    $pythonBinOnPath = Split-Path -Path $pythonExeOnPath
+    $description = "<br>#### $pythonBinVersion<br>_Environment:_<br>* Location: $pythonBinOnPath<br>* PATH: contains the location of python.exe version $pythonBinVersion"
+
+    return $description
+}
+
+function Get-SystemDefaultRuby {
+    if (Get-Command -Name 'ruby')
+    {
+        Write-Host "$(ruby --version) is on the path."
+    }
+    else
+    {
+        Write-Host "Ruby is not on the path."
+        exit 1
+    }
+
+    $rubyExeOnPath = (Get-Command -Name 'ruby').Path
+    $rubyBinOnPath = Split-Path -Path $rubyExeOnPath
+
+    if ( $(ruby --version) -match 'ruby (?<version>.*) \(.*' )
+    {
+        $rubyVersionOnPath = $Matches.version
+    }
+    else
+    {
+        Write-Host "Unable to determine Ruby version at " + $rubyBinOnPath
+        exit 1
+    }
+
+    $gemVersion = & gem -v
+
+    $description = "<br>#### Ruby $rubyVersionOnPath<br>_Environment:_<br>* Location: $rubyBinOnPath<br>* PATH: contains the location of ruby.exe version $rubyVersionOnPath<br>* Gem Version: $gemVersion"
+
+    return $description
+}
+
 function GetMarkdownDescription {
     param (
         [Parameter(Mandatory = $True)]
@@ -121,6 +177,12 @@ function ToolcacheTest {
             RunTestsByPath -ExecTests $ExecTests -Path $path -SoftwareName $SoftwareName -SoftwareVersion $foundVersion -SoftwareArchitecture $requiredArchitecture
 
             $markdownDescription += GetMarkdownDescription -SoftwareVersion $foundVersion -SoftwareArchitecture $requiredArchitecture
+        }
+        if ($tool -contains "python") {
+            $markdownDescription += Get-SystemDefaultPython
+        }
+        if ($tool -contains "ruby") {
+            $markdownDescription += Get-SystemDefaultRuby
         }
     }
     Add-SoftwareDetailsToMarkdown -SoftwareName "$SoftwareName (Pre-Cached)" -DescriptionMarkdown $markdownDescription
