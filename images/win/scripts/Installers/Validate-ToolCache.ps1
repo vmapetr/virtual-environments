@@ -195,14 +195,13 @@ function ToolcacheTest {
             $markdownDescription += GetMarkdownDescription -SoftwareVersion $foundVersion -SoftwareArchitecture $requiredArchitecture
         }
     }
+
     if ($SoftwareName -contains "Python") {
         $markdownDescription += Get-SystemDefaultPython
     }
     if ($SoftwareName -contains "Ruby") {
         $markdownDescription += Get-SystemDefaultRuby
     }
-
-    Write-Host "Markdown = $markdownDescription"
 
     Add-SoftwareDetailsToMarkdown -SoftwareName $SoftwareName -DescriptionMarkdown $markdownDescription
 }
