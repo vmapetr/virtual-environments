@@ -64,6 +64,8 @@ function RunTestsByPath {
 }
 
 function Get-SystemDefaultPython {
+    Write-Host "Validate default system Python..."
+
     if (Get-Command -Name 'python')
     {
         Write-Host "Python $(& python -V 2>&1) on path"
@@ -81,14 +83,15 @@ function Get-SystemDefaultPython {
         exit 1
     }
 
-    $pythonExeOnPath = (Get-Command -Name 'python').Path
-    $pythonBinOnPath = Split-Path -Path $pythonExeOnPath
-    $description = "<br>#### $pythonBinVersion<br>_Environment:_<br>* Location: $pythonBinOnPath<br>* PATH: contains the location of python.exe version $pythonBinVersion"
+    $pythonBinOnPath = Split-Path -Path (Get-Command -Name 'python').Path
+    $description = GetDefaultToolDescription -SoftwareVersion $pythonBinVersion -SoftwareLocation $pythonBinOnPath
 
     return $description
 }
 
 function Get-SystemDefaultRuby {
+    Write-Host "Validate default system Ruby..."
+
     if (Get-Command -Name 'ruby')
     {
         Write-Host "$(ruby --version) is on the path."
@@ -99,22 +102,35 @@ function Get-SystemDefaultRuby {
         exit 1
     }
 
-    $rubyExeOnPath = (Get-Command -Name 'ruby').Path
-    $rubyBinOnPath = Split-Path -Path $rubyExeOnPath
-
-    if ( $(ruby --version) -match 'ruby (?<version>.*) \(.*' )
-    {
-        $rubyVersionOnPath = $Matches.version
-    }
-    else
+    $rubyBinOnPath = Split-Path -Path (Get-Command -Name 'ruby').Path
+    if ( $(ruby --version) -notmatch 'ruby (?<version>.*) \(.*' )
     {
         Write-Host "Unable to determine Ruby version at " + $rubyBinOnPath
         exit 1
+
     }
 
-    $gemVersion = & gem -v
+    $rubyVersionOnPath = "Ruby $($Matches.version)"
+    $description = GetDefaultToolDescription -SoftwareVersion $rubyVersionOnPath -SoftwareLocation $rubyBinOnPath
 
-    $description = "<br>#### Ruby $rubyVersionOnPath<br>_Environment:_<br>* Location: $rubyBinOnPath<br>* PATH: contains the location of ruby.exe version $rubyVersionOnPath<br>* Gem Version: $gemVersion"
+    $gemVersion = & gem -v
+    $description += "* Gem Version: $gemVersion<br/>"
+
+    return $description
+}
+
+function GetDefaultToolDescription {
+    param (
+        [Parameter(Mandatory = $True)]
+        [string]$SoftwareVersion,
+        [Parameter(Mandatory = $True)]
+        [string]$SoftwareLocation
+    )
+
+    $description = "#### $SoftwareVersion<br/>"
+    $description += "_Environment:_<br/>"
+    $description += "* Location: $SoftwareLocation<br/>"
+    $description += "* PATH: contains the location of executable for $SoftwareVersion<br/>"
 
     return $description
 }
@@ -178,14 +194,17 @@ function ToolcacheTest {
 
             $markdownDescription += GetMarkdownDescription -SoftwareVersion $foundVersion -SoftwareArchitecture $requiredArchitecture
         }
-        if ($tool -contains "python") {
-            $markdownDescription += Get-SystemDefaultPython
-        }
-        if ($tool -contains "ruby") {
-            $markdownDescription += Get-SystemDefaultRuby
-        }
     }
-    Add-SoftwareDetailsToMarkdown -SoftwareName "$SoftwareName (Pre-Cached)" -DescriptionMarkdown $markdownDescription
+    if ($SoftwareName -contains "Python") {
+        $markdownDescription += Get-SystemDefaultPython
+    }
+    if ($SoftwareName -contains "Ruby") {
+        $markdownDescription += Get-SystemDefaultRuby
+    }
+
+    Write-Host "Markdown = $markdownDescription"
+
+    Add-SoftwareDetailsToMarkdown -SoftwareName $SoftwareName -DescriptionMarkdown $markdownDescription
 }
 
 # Python test
