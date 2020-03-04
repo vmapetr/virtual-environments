@@ -127,7 +127,7 @@ function GetDefaultToolDescription {
         [string]$SoftwareLocation
     )
 
-    $description = "<br/>System default version: $SoftwareVersion<br/>"
+    $description = "<br/>__System default version:__ $SoftwareVersion<br/>"
     $description += "_Environment:_<br/>"
     $description += "* Location: $SoftwareLocation<br/>"
     $description += "* PATH: contains the location of $SoftwareVersion<br/>"
