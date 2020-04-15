@@ -6,7 +6,6 @@
 $stableKindTag = "v0.7.0"
 $tagToUse = $stableKindTag;
 $destFilePath = "C:\ProgramData\kind"
-$outFilePath = "C:\ProgramData\kind\kind.exe"
 
 try
 {
@@ -14,10 +13,10 @@ try
     Write-Host "Downloading kind.exe..."
     New-Item -Path $destFilePath -ItemType Directory -Force
 
-    Invoke-WebRequest -Uri $getkindUri -OutFile $outFilePath
+    $kindInstallerPath = Start-DownloadWithRetry -Url $getkindUri -Name "kind.exe" -DownloadPath $destFilePath
 
     Write-Host "Starting Install kind.exe..."
-    $process = Start-Process -FilePath $outFilePath -Wait -PassThru
+    $process = Start-Process -FilePath $kindInstallerPath -Wait -PassThru
     $exitCode = $process.ExitCode
 
     if ($exitCode -eq 0 -or $exitCode -eq 3010)
