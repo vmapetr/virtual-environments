@@ -5,6 +5,13 @@
 
 # Download the latest command line tools so that we can accept all of the licenses.
 # See https://developer.android.com/studio/#command-tools
+$sdkArchName = "android-sdk-tools.zip"
+$sdkArchPath = Start-DownloadWithRetry -Url "https://dl.google.com/android/repository/sdk-tools-windows-4333796.zip" -Name $sdkArchName
+
+# Don't replace the one that VS installs as it seems to break things.
+Expand-Archive -Path $sdkArchName -DestinationPath android-sdk -Force
+
+
 Invoke-WebRequest -UseBasicParsing -Uri "https://dl.google.com/android/repository/sdk-tools-windows-4333796.zip" -OutFile android-sdk-tools.zip
 
 # Don't replace the one that VS installs as it seems to break things.
