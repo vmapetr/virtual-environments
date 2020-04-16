@@ -9,15 +9,15 @@ $BaseUrl = "https://download.microsoft.com/download/8/7/2/872BCECA-C849-4B40-8EB
 
 # install required MSIs
 $SQLSysClrTypesName = "SQLSysClrTypes.msi"
-$SQLSysClrTypesUrl = "${$BaseUrl}/${SQLSysClrTypesName}"
+$SQLSysClrTypesUrl = "${BaseUrl}/${SQLSysClrTypesName}"
 Install-Binary -Url $SQLSysClrTypesUrl -Name $SQLSysClrTypesName
 
 $SharedManagementObjectsName = "SharedManagementObjects.msi"
-$SharedManagementObjectsUrl = "${$BaseUrl}/${SharedManagementObjectsName}"
+$SharedManagementObjectsUrl = "${BaseUrl}/${SharedManagementObjectsName}"
 Install-Binary -Url $SharedManagementObjectsUrl -Name $SharedManagementObjectsName
 
 $PowerShellToolsName = "PowerShellTools.msi"
-$PowerShellToolsUrl = "${$BaseUrl}/${PowerShellToolsName}"
+$PowerShellToolsUrl = "${BaseUrl}/${PowerShellToolsName}"
 Install-Binary -Url $PowerShellToolsUrl -Name $PowerShellToolsName
 
 # install sqlserver PS module
