@@ -4,6 +4,8 @@
 ################################################################################
 $ErrorActionPreference = "Stop"
 
+Import-Module -Name ImageHelpers -Force
+
 Function InstallVS
 {
   Param
@@ -28,13 +30,11 @@ Function InstallVS
     }
 
     Write-Host "Downloading Bootstrapper ..."
-    Invoke-WebRequest -Uri $VSBootstrapperURL -OutFile "${env:Temp}\vs_$Sku.exe"
-
-    $FilePath = "${env:Temp}\vs_$Sku.exe"
-    $Arguments = ('/c', $FilePath, $WorkLoads, '--quiet', '--norestart', '--wait', '--nocache' )
+    $filePath = Start-DownloadWithRetry -Url $VSBootstrapperURL -Name "vs_$Sku.exe"
 
     Write-Host "Starting Install ..."
-    $process = Start-Process -FilePath cmd.exe -ArgumentList $Arguments -Wait -PassThru
+    $arguments = ('/c', $filePath, $WorkLoads, '--quiet', '--norestart', '--wait', '--nocache' )
+    $process = Start-Process -FilePath cmd.exe -ArgumentList $arguments -Wait -PassThru
     $exitCode = $process.ExitCode
 
     if ($exitCode -eq 0 -or $exitCode -eq 3010)
