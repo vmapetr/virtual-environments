@@ -147,7 +147,6 @@
                 "{{ template_dir }}/scripts/Installers/Install-7zip.ps1"
             ]
         },
-        },
         {
             "type": "file",
             "source": "{{template_dir}}/toolcache-2019.json",
@@ -175,7 +174,7 @@
             "scripts":[
                 "{{ template_dir }}/scripts/Installers/Validate-ToolCache.ps1"
             ]
-        }
+        },
         {
             "type": "file",
             "source": "C:\\InstalledSoftware.md",
