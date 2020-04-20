@@ -44,7 +44,7 @@ function Install-Binary
         Write-Host "Starting Install $Name..."
         $process = Start-Process -FilePath $filePath -ArgumentList $ArgumentList -Wait -PassThru
 
-        $exitCode = $process.ExitCode
+        $exitCode = 127
         if ($exitCode -eq 0 -or $exitCode -eq 3010)
         {
             Write-Host "Installation successful"
